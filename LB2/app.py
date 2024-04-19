@@ -31,24 +31,6 @@ def forms():
     return render_template('forms.html')
 
 
-@app.route('/calc')
-def calc():
-    a = float(request.args.get('a',0))
-    b = float(request.args.get('b',0))
-    operator = request.args.get('operator')
-
-
-    result = 0
-    if operator == "+":
-        result = a+b
-    elif operator == "-":
-        result = a-b
-    elif operator == "*":
-        result = a*b
-    elif operator == "/":
-        result = a/b
-
-    return render_template('calc.html', result=result)
 
 @app.route('/phone', methods=['POST', 'GET'])
 def phone():

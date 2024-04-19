@@ -34,7 +34,7 @@ def generate_post(i):
     }
 
 posts_list = sorted([generate_post(i) for i in range(5)], key=lambda p: p['date'], reverse=True)
-
+#ук какие действ выполн при обращ к различным URL
 #Маршрут для главной страницы
 @app.route('/')
 def index():
@@ -45,7 +45,7 @@ def index():
 def posts():
     return render_template('posts.html', title='Посты', posts=posts_list)
 
-#Маршрут для отдельного поста, где <int:index> - это целочисленный параметр
+#Маршрут для отдельного поста, где <int:index> - это целочисленный параметр(при обр)
 @app.route('/posts/<int:index>')
 def post(index):
     p = posts_list[index]
