@@ -17,10 +17,12 @@
               </button>
               <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
-                  {% if current_user.is_authenticated%}
+
                   <li class="nav-item">
                     <a class="nav-link {% if request.endpoint == 'userlist' %}active{% endif %}" href="{{url_for('userlist')}}">Список пользователей</a>
                   </li>
+                  {% if current_user.is_authenticated%}
+
                   <li class="nav-item">
                     <a class="nav-link  {% if request.endpoint == 'createuser' %}active{% endif %}" href="{{url_for('createuser')}}">Создать пользователя</a>
                   </li>

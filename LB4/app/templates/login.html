@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+<form method='POST' class="container">
+    <div class="mb-3">
+      <label for="login" class="form-label">login</label>
+      <input type='login' class="form-control {{ 'is-invalid' if error_login else '' }}" id="exampleInputEmail1" aria-describedby="emailHelp" name="login">
+      {% if error_login %}
+        <div class="invalid-feedback">{{ error_login }}</div>
+      {% endif %}
+    </div>
+    <div class="mb-3">
+      <label for="exampleInputPassword1" class="form-label">Password</label>
+      <input type="password" class="form-control {{ 'is-invalid' if error_passwd else '' }}" id="exampleInputPassword1" name="password">
+      {% if error_passwd %}
+      <div class="invalid-feedback">{{ error_passwd }}</div>
+      {% endif %}
+    </div>
+    <div class="mb-3 form-check">
+      <input type="checkbox" class="form-check-input" id="exampleCheck1" name="remember">
+      <label class="form-check-label" for="exampleCheck1">Check me out</label>
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>
+{% endblock content %}

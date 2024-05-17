@@ -1,0 +1,34 @@
+{% macro form_user(user, error_login=None, error_passwd=None, error_first_name=None, error_last_name=None)%}
+    <form method="POST">
+        {% if request.endpoint == 'createuser'%}
+            <div class="mb-3">
+                <input type="login" class="form-control {{ 'is-invalid' if error_login else '' }}" id="" aria-describedby="" placeholder="Login" name="login" value={{user.login or ''}}>
+                {% if error_login %}
+                    <div class="invalid-feedback">{{ error_login }}</div>
+                {% endif %}
+            </div>
+            <div class="mb-3">
+                <input type="password" class="form-control {{ 'is-invalid' if error_passwd else '' }}" id="" aria-describedby="" placeholder="Password" name="password"  value={{user.password or ''}}>
+                {% if error_passwd %}
+                    <div class="invalid-feedback">{{ error_passwd }}</div>
+                {% endif %}
+            </div>
+        {% endif %}
+        <div class="mb-3">
+            <input type="text" class="form-control {{ 'is-invalid' if error_first_name else '' }}" id="" aria-describedby="" placeholder="First name" name="first_name" value={{user.first_name or ''}}>
+            {% if error_first_name %}
+                <div class="invalid-feedback">{{ error_first_name }}</div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <input type="text" class="form-control {{ 'is-invalid' if error_last_name else '' }}" id="" aria-describedby="" placeholder="Last name" name="last_name"  value={{user.last_name or ''}}>
+            {% if error_last_name %}
+                <div class="invalid-feedback">{{ error_last_name }}</div>
+            {% endif %}
+        </div>
+        <div class="mb-3">
+            <input type="text" class="form-control" id="" aria-describedby="" placeholder="Middle_name" name="middle_name"  value={{user.middle_name or ''}}>
+        </div>
+        <button type="submit" class="btn btn-primary">Submit</button>
+    </form>
+{% endmacro %}
