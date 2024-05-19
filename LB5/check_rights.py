@@ -20,6 +20,11 @@ class CheckRights:
         if current_user.id == self._record.id:
             return True
         return current_user.is_admin()
+    
+    def show_log(self):
+        if current_user.role_id == CheckRights.ADMIN_ROLE_ID:
+            return True
+        return False
 
         
 
