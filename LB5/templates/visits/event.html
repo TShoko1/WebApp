@@ -16,14 +16,8 @@
         <tbody>
             {% for event in events %}
             <tr>
-                <td>{{ loop.index + offset}}</td>
-                <td>
-                    {% if event.first_name and event.last_name %}
-                        {{ event.first_name }} {{ event.last_name }}
-                    {% else %}
-                        Неаутентифицированный пользователь
-                    {% endif %}
-                </td>
+                <td>{{ loop.index + offset }}</td>
+                <td>{{ event.user_name }}</td>
                 <td>{{ event.path }}</td>
                 <td>{{ event.created_at }}</td>
             </tr>

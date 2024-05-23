@@ -17,13 +17,7 @@
                 <td>
                     {{ loop.index }}
                 </td>
-                <td>
-                    {% if event.first_name and event.last_name %}
-                        {{ event.first_name }} {{ event.last_name }}
-                    {% else %}
-                        Неаутентифицированный пользователь
-                    {% endif %}
-                </td>
+                <td>{{ event.user_name }}</td>
                 <td>
                     {{ event.count }}
                 </td>

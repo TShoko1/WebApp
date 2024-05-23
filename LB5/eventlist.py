@@ -37,7 +37,12 @@ def show():
     # Определение запроса для получения записей
     if current_user.is_admin() or current_user.role_id != CheckRights.USER_ROLE_ID:
         query = '''
-        SELECT el.id, el.user_id, el.path, el.created_at, u.first_name, u.last_name
+        SELECT el.id, el.user_id, el.path, el.created_at, 
+               CASE 
+                   WHEN u.id IS NULL THEN 'Неаутентифицированный пользователь' 
+                   WHEN u.first_name IS NOT NULL AND u.last_name IS NOT NULL THEN CONCAT(u.first_name, ' ', u.last_name)
+                   ELSE 'Нулевой пользователь' 
+               END as user_name
         FROM eventlist el
         LEFT JOIN users3 u ON el.user_id = u.id
         ORDER BY el.created_at DESC
@@ -46,7 +51,12 @@ def show():
         cursor.execute(query, (per_page, offset))
     else:
         query = '''
-        SELECT el.id, el.user_id, el.path, el.created_at, u.first_name, u.last_name
+        SELECT el.id, el.user_id, el.path, el.created_at, 
+               CASE 
+                   WHEN u.id IS NULL THEN 'Неаутентифицированный пользователь' 
+                   WHEN u.first_name IS NOT NULL AND u.last_name IS NOT NULL THEN CONCAT(u.first_name, ' ', u.last_name)
+                   ELSE 'Нулевой пользователь' 
+               END as user_name
         FROM eventlist el
         LEFT JOIN users3 u ON el.user_id = u.id
         WHERE el.user_id = %s
@@ -82,10 +92,15 @@ def show_path_user():
     cursor = db.connection().cursor(named_tuple=True)
 
     query = '''
-    SELECT COUNT(*) as count, el.user_id, u.first_name, u.last_name
+    SELECT COUNT(*) as count, el.user_id, 
+           CASE 
+               WHEN u.id IS NULL THEN 'Неаутентифицированный пользователь' 
+               WHEN u.first_name IS NOT NULL AND u.last_name IS NOT NULL THEN CONCAT(u.first_name, ' ', u.last_name)
+               ELSE 'Нулевой пользователь' 
+           END as user_name
     FROM eventlist el
     LEFT JOIN users3 u ON el.user_id = u.id
-    GROUP BY el.user_id, u.first_name, u.last_name
+    GROUP BY el.user_id, u.first_name, u.last_name, u.id
     '''
     cursor.execute(query)
     

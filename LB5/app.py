@@ -78,13 +78,25 @@ def createuser():
         flash('Пользователь успешно создан','success')
         return redirect(url_for('userlist'))
 
-@app.route('/user/show/<int:user_id>')
+@app.route('/user/show/<int:user_id>', methods=["GET", "POST"])
 @login_required
 @check_perm('show')
 def show_user(user_id):
+    if request.method == 'POST':
+        first_name = request.form['first_name']
+        last_name = request.form['last_name']
+        middle_name = request.form['middle_name']
+        cursor = db.connection().cursor(named_tuple=True)
+        query = 'UPDATE users3 SET first_name=%s, last_name=%s, middle_name=%s WHERE id=%s'
+        cursor.execute(query, (first_name, last_name, middle_name, user_id))
+        db.connection().commit()
+        cursor.close()
+        flash('Информация о пользователе обновлена', 'success')
+        return redirect(url_for('show_user', user_id=user_id))
+
     cursor = db.connection().cursor(named_tuple=True)
     query = '''SELECT users3.id, users3.login, users3.first_name, users3.last_name,
-    roles3.name AS role_name FROM users3 LEFT JOIN roles3 ON users3.role_id = roles3.id WHERE users3.id=%s'''
+               roles3.name AS role_name FROM users3 LEFT JOIN roles3 ON users3.role_id = roles3.id WHERE users3.id=%s'''
     cursor.execute(query, (user_id,))
     user = cursor.fetchone()
     cursor.close()
