@@ -1,4 +1,4 @@
-from flask import render_template, url_for, request, redirect, flash, Blueprint, g, redirect, send_file
+from flask import render_template, url_for, request, redirect, flash, Blueprint, g, send_file, session
 from flask_login import login_required, current_user
 from functools import wraps
 from app import db
@@ -8,9 +8,8 @@ import csv
 from io import StringIO, BytesIO
 from auth import check_perm
 
-
 bp_eventlist = Blueprint('eventlist', __name__, url_prefix='/eventlist')
-PER_PAGE =10
+PER_PAGE = 10
 FIELDS = ["id", "user_id", "path"]
 
 @bp_eventlist.route('/show-all')
@@ -83,7 +82,7 @@ def show_path():
     cursor.execute(query)
     events = cursor.fetchall()
     cursor.close()
-    return render_template('visits/event_path.html', events = events)
+    return render_template('visits/event_path.html', events=events)
 
 @bp_eventlist.route('/show-path-user')
 @check_perm('show_log')
@@ -103,7 +102,7 @@ def show_path_user():
     GROUP BY el.user_id, u.first_name, u.last_name, u.id
     '''
     cursor.execute(query)
-    
+
     events = cursor.fetchall()
     cursor.close()
     return render_template('visits/event_path_user.html', events=events)
@@ -127,9 +126,7 @@ def show_path_site():
 @login_required
 def save_to_csv():
     template = request.args.get('template')
-    page = request.args.get('page', 1, type=int)
-    per_page = 10
-    offset = (page - 1) * per_page
+    limit = 10  # Ограничение на количество записей для общего отчета
 
     cursor = db.connection().cursor()
 
@@ -137,21 +134,22 @@ def save_to_csv():
     writer = csv.writer(output)
 
     if template == 'user':
+        limit = 18  # Устанавливаем ограничение на 18 записей для отчета по страницам
         query = '''
             SELECT COUNT(*) as count, path 
             FROM eventlist 
             WHERE user_id = %s 
             GROUP BY path
-            LIMIT %s OFFSET %s
+            LIMIT %s
         '''
-        cursor.execute(query, (current_user.id, per_page, offset))
+        cursor.execute(query, (current_user.id, limit))
         path_events = cursor.fetchall()
-        
+
         writer.writerow(['Журнал посещений по страницам'])
         writer.writerow(['№', 'Страница', 'Количество посещений'])
         for idx, event in enumerate(path_events, start=1):
             writer.writerow([idx, event[1], event[0]])
-    
+
     elif template == 'all':
         query = '''
         SELECT DISTINCT el.id, el.user_id, el.path, el.created_at, 
@@ -163,12 +161,12 @@ def save_to_csv():
         FROM eventlist el
         LEFT JOIN users3 u ON el.user_id = u.id
         ORDER BY el.created_at DESC
-        LIMIT %s OFFSET %s
+        LIMIT %s
         '''
 
-        cursor.execute(query, (per_page, offset))
+        cursor.execute(query, (limit,))
         logs = cursor.fetchall()
-        
+
         writer.writerow(['Журнал посещений'])
         writer.writerow(['№', 'Пользователь', 'Путь', 'Дата создания'])
         for idx, log in enumerate(logs, start=1):
