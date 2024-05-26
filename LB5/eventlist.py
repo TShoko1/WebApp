@@ -124,60 +124,58 @@ def show_path_site():
     return render_template('visits/event_path_site.html', events=events)
 
 @bp_eventlist.route("/csvsave")
+@login_required
 def save_to_csv():
     template = request.args.get('template')
+    page = request.args.get('page', 1, type=int)
+    per_page = 10
+    offset = (page - 1) * per_page
+
     cursor = db.connection().cursor()
-    
+
     output = StringIO()
     writer = csv.writer(output)
 
     if template == 'user':
-        # Данные по страницам для текущего пользователя
         query = '''
             SELECT COUNT(*) as count, path 
             FROM eventlist 
             WHERE user_id = %s 
             GROUP BY path
+            LIMIT %s OFFSET %s
         '''
-        cursor.execute(query, (current_user.id,))
+        cursor.execute(query, (current_user.id, per_page, offset))
         path_events = cursor.fetchall()
-        writer.writerow(['Log by page for user'])
-        writer.writerow(['Record Number', 'Number of visits', 'Path'])
+        
+        writer.writerow(['Журнал посещений по страницам'])
+        writer.writerow(['№', 'Страница', 'Количество посещений'])
         for idx, event in enumerate(path_events, start=1):
             writer.writerow([idx, event[1], event[0]])
-
+    
     elif template == 'all':
-        # Данные о всех посещениях
-        cursor.execute('SELECT id, user_id, path FROM eventlist')
+        query = '''
+        SELECT DISTINCT el.id, el.user_id, el.path, el.created_at, 
+               CASE 
+                   WHEN u.id IS NULL THEN 'Неаутентифицированный пользователь' 
+                   WHEN u.first_name IS NOT NULL AND u.last_name IS NOT NULL THEN CONCAT(u.first_name, ' ', u.last_name)
+                   ELSE 'Нулевой пользователь' 
+               END as user_name
+        FROM eventlist el
+        LEFT JOIN users3 u ON el.user_id = u.id
+        ORDER BY el.created_at DESC
+        LIMIT %s OFFSET %s
+        '''
+
+        cursor.execute(query, (per_page, offset))
         logs = cursor.fetchall()
-        writer.writerow(['Visit log'])
-        writer.writerow(['ID', 'User ID', 'Path'])
-        for log in logs:
-            writer.writerow([log[0], log[1], log[2]])
-
-        writer.writerow([])  # Пустая строка для разделения
-
-        # Данные по пользователям
-        cursor.execute('SELECT COUNT(*) as count, user_id FROM eventlist GROUP BY user_id')
-        user_events = cursor.fetchall()
-        writer.writerow(['User log'])
-        writer.writerow(['Number of visits', 'User ID'])
-        for event in user_events:
-            writer.writerow([event[0], event[1]])
-
-        writer.writerow([])
-
-        # Данные по страницам
-        cursor.execute('SELECT COUNT(*) as count, path FROM eventlist GROUP BY path')
-        path_events = cursor.fetchall()
-        writer.writerow(['Log by page'])
-        writer.writerow(['Number of visits', 'Path'])
-        for idx, event in enumerate(path_events, start=1):
-            writer.writerow([idx, event[1], event[0]])
+        
+        writer.writerow(['Журнал посещений'])
+        writer.writerow(['№', 'Пользователь', 'Путь', 'Дата создания'])
+        for idx, log in enumerate(logs, start=1):
+            writer.writerow([idx, log[4], log[2], log[3]])
 
     cursor.close()
 
-    # Преобразование StringIO в BytesIO для отправки
     output_bytes = BytesIO()
     output_bytes.write(output.getvalue().encode('utf-8'))
     output_bytes.seek(0)
