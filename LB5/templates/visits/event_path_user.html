@@ -25,5 +25,6 @@
             {% endfor %}
         </tbody>
     </table>
+    <a href="{{ url_for('eventlist.save_to_csv', template='user_count') }}" class="btn btn-primary">Сохранить в CSV</a>
 </div>
 {% endblock %}

@@ -129,7 +129,6 @@ def save_to_csv():
     limit = 10  # Ограничение на количество записей для общего отчета
 
     cursor = db.connection().cursor()
-
     output = StringIO()
     writer = csv.writer(output)
 
@@ -151,8 +150,51 @@ def save_to_csv():
             writer.writerow([idx, event[1], event[0]])
 
     elif template == 'all':
+        if current_user.is_admin():
+            query = '''
+            SELECT DISTINCT el.id, el.user_id, el.path, el.created_at, 
+                   CASE 
+                       WHEN u.id IS NULL THEN 'Неаутентифицированный пользователь' 
+                       WHEN u.first_name IS NOT NULL AND u.last_name IS NOT NULL THEN CONCAT(u.first_name, ' ', u.last_name)
+                       ELSE 'Нулевой пользователь' 
+                   END as user_name
+            FROM eventlist el
+            LEFT JOIN users3 u ON el.user_id = u.id
+            ORDER BY el.created_at DESC
+            LIMIT %s
+            '''
+            cursor.execute(query, (limit,))
+            logs = cursor.fetchall()
+
+            writer.writerow(['Журнал посещений'])
+            writer.writerow(['№', 'Пользователь', 'Путь', 'Дата создания'])
+            for idx, log in enumerate(logs, start=1):
+                writer.writerow([idx, log[4], log[2], log[3]])
+        else:
+            query = '''
+            SELECT DISTINCT el.id, el.user_id, el.path, el.created_at, 
+                   CASE 
+                       WHEN u.id IS NULL THEN 'Неаутентифицированный пользователь' 
+                       WHEN u.first_name IS NOT NULL AND u.last_name IS NOT NULL THEN CONCAT(u.first_name, ' ', u.last_name)
+                       ELSE 'Нулевой пользователь' 
+                   END as user_name
+            FROM eventlist el
+            LEFT JOIN users3 u ON el.user_id = u.id
+            WHERE el.user_id = %s
+            ORDER BY el.created_at DESC
+            LIMIT %s
+            '''
+            cursor.execute(query, (current_user.id, limit))
+            logs = cursor.fetchall()
+
+            writer.writerow(['Журнал посещений'])
+            writer.writerow(['№', 'Пользователь', 'Путь', 'Дата создания'])
+            for idx, log in enumerate(logs, start=1):
+                writer.writerow([idx, log[4], log[2], log[3]])
+
+    elif template == 'user_count' and current_user.is_admin():
         query = '''
-        SELECT DISTINCT el.id, el.user_id, el.path, el.created_at, 
+        SELECT COUNT(*) as count, el.user_id, 
                CASE 
                    WHEN u.id IS NULL THEN 'Неаутентифицированный пользователь' 
                    WHEN u.first_name IS NOT NULL AND u.last_name IS NOT NULL THEN CONCAT(u.first_name, ' ', u.last_name)
@@ -160,17 +202,15 @@ def save_to_csv():
                END as user_name
         FROM eventlist el
         LEFT JOIN users3 u ON el.user_id = u.id
-        ORDER BY el.created_at DESC
-        LIMIT %s
+        GROUP BY el.user_id, u.first_name, u.last_name, u.id
         '''
+        cursor.execute(query)
+        user_events = cursor.fetchall()
 
-        cursor.execute(query, (limit,))
-        logs = cursor.fetchall()
-
-        writer.writerow(['Журнал посещений'])
-        writer.writerow(['№', 'Пользователь', 'Путь', 'Дата создания'])
-        for idx, log in enumerate(logs, start=1):
-            writer.writerow([idx, log[4], log[2], log[3]])
+        writer.writerow(['Журнал посещений по пользователям'])
+        writer.writerow(['№', 'Пользователь', 'Количество посещений'])
+        for idx, user_event in enumerate(user_events, start=1):
+            writer.writerow([idx, user_event[2], user_event[0]])
 
     cursor.close()
 
@@ -178,9 +218,15 @@ def save_to_csv():
     output_bytes.write(output.getvalue().encode('utf-8'))
     output_bytes.seek(0)
 
+    filename = "logs.csv"
+    if template == 'user':
+        filename = "user_logs.csv"
+    elif template == 'user_count' and current_user.is_admin():
+        filename = "user_count_logs.csv"
+
     return send_file(
         output_bytes, 
-        download_name="logs.csv" if template == 'all' else "user_logs.csv", 
+        download_name=filename, 
         as_attachment=True, 
         mimetype='text/csv'
     )
