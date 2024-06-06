@@ -85,8 +85,7 @@
     </section>
 
     {% if current_user.is_authenticated %}
-        {% set user_review = reviews|selectattr("user_id", "equalto", current_user.id)|first %}
-        {% if user_review %}
+        {% if user_review is not none %}
             <div class="alert alert-info">
                 <h5>Ваш отзыв:</h5>
                 <p class="mb-1"><strong>Оценка:</strong> {{ user_review.rating }} / 5</p>

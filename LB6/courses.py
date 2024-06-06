@@ -77,7 +77,13 @@ def show(course_id):
     reviews = db.session.execute(
         db.select(Review).where(Review.course_id == course_id).order_by(Review.created_at.desc()).limit(5)
     ).scalars()
-    return render_template('courses/show.html', course=course, reviews=reviews)
+    user_review = None
+    if current_user.is_authenticated:
+        user_review = db.session.execute(
+            db.select(Review).where(Review.course_id == course_id, Review.user_id == current_user.id)
+        ).scalar()
+
+    return render_template('courses/show.html', course=course, reviews=reviews, user_review=user_review)
 
 @bp.route('/<int:course_id>/reviews', methods=['GET', 'POST'])
 def all_reviews(course_id):
